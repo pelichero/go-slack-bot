@@ -1,9 +1,9 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"os"
-	"regexp"
 	"strings"
 
 	"github.com/nlopes/slack"
@@ -17,43 +17,55 @@ func getenv(name string) string {
 	return v
 }
 
+type commandResponse struct {
+	title string
+	msgs  []commandResponseMsg
+
+	channel string
+	err     error
+}
+
+type commandResponseMsg struct {
+	text            string
+	file            bytes.Buffer
+	filename        string
+	fileContentType string
+}
+
 func main() {
+
 	token := getenv("SLACKTOKEN")
 	api := slack.New(token)
 	rtm := api.NewRTM()
+	c := make(chan commandResponse, 10)
+
 	go rtm.ManageConnection()
 
-Loop:
-	for {
-		select {
-		case msg := <-rtm.IncomingEvents:
-			fmt.Print("Event Received: ")
-			switch ev := msg.Data.(type) {
+	go replyHandler(c, api, rtm)
 
-			case *slack.MessageEvent:
-				info := rtm.GetInfo()
+	for msg := range rtm.IncomingEvents {
+		switch ev := msg.Data.(type) {
 
-				text := ev.Text
-				text = strings.TrimSpace(text)
-				text = strings.ToLower(text)
+		case *slack.InvalidAuthEvent:
+			return
 
-				matched, _ := regexp.MatchString("dark souls", text)
-
-				if ev.User != info.User.ID && matched {
-					rtm.SendMessage(rtm.NewOutgoingMessage("\\[T]/ Praise the Sun \\[T]/", ev.Channel))
-				}
-
-			case *slack.RTMError:
-				fmt.Printf("Error: %s\n", ev.Error())
-
-			case *slack.InvalidAuthEvent:
-				fmt.Printf("Invalid credentials")
-				break Loop
-
-			default:
-				// Take no action
+		case *slack.MessageEvent:
+			if !callingMe(rtm.GetInfo(), ev) {
+				continue
 			}
 		}
 	}
 }
 
+func replyHandler(replyChan chan commandResponse, api *slack.Client, rtm *slack.RTM) {
+	for resp := range replyChan {
+		rtm.SendMessage(rtm.NewOutgoingMessage("Ooops. Something went wrong", resp.channel))
+	}
+}
+
+func callingMe(info *slack.Info, ev *slack.MessageEvent) bool {
+	direct := strings.HasPrefix(ev.Msg.Channel, "D")
+	inChannel := strings.HasPrefix(ev.Text, fmt.Sprintf("<@%s> ", info.User.ID))
+
+	return ev.User != info.User.ID && ev.Msg.Text != "" && (direct || inChannel)
+}

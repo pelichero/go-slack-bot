@@ -10,7 +10,7 @@ import (
 
 func main() {
 
-	api := slack.New("xoxb-930298392129-942400401751-RKWR3dnd6Rxr9wX5FBCLhFTu")
+	api := slack.New("xoxb-930298392129-942400401751-1FECYzjnyEPtBDKYJUmMFwKt")
 	rtm := api.NewRTM()
 	go rtm.ManageConnection()
 
@@ -30,10 +30,10 @@ Loop:
 				text = strings.TrimSpace(text)
 				text = strings.ToLower(text)
 
-				matched, _ := regexp.MatchString("hello world", text)
+				matched, _ := regexp.MatchString("hello", text)
 
 				if ev.User != info.User.ID && matched {
-					rtm.SendMessage(rtm.NewOutgoingMessage("\\[T]/ Praise the Sun \\[T]/", ev.Channel))
+					rtm.SendMessage(rtm.NewOutgoingMessage("hello", ev.Channel))
 				}
 
 			case *slack.RTMError:

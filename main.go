@@ -2,25 +2,15 @@ package main
 
 import (
 	"fmt"
-	"os"
 	"regexp"
 	"strings"
 
 	"github.com/nlopes/slack"
 )
 
-func getenv(name string) string {
-	v := os.Getenv(name)
-	if v == "" {
-		panic("missing required environment variable " + name)
-	}
-	return v
-}
-
 func main() {
 
-	token := getenv("SLACKTOKEN")
-	api := slack.New(token)
+	api := slack.New("xoxb-930298392129-942400401751-RKWR3dnd6Rxr9wX5FBCLhFTu")
 	rtm := api.NewRTM()
 	go rtm.ManageConnection()
 

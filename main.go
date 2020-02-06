@@ -10,7 +10,7 @@ import (
 
 func main() {
 
-	api := slack.New("xoxb-930298392129-942400401751-1FECYzjnyEPtBDKYJUmMFwKt")
+	api := slack.New("xoxb-930298392129-942400401751-wVc5NEihpHXAjLVTOVZUhq4K")
 	rtm := api.NewRTM()
 	go rtm.ManageConnection()
 
